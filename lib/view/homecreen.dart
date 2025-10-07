@@ -26,11 +26,39 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _handleSearch(String value) {
+    setState(() {
+      if (value.isNotEmpty) {
+        futureBooks = _viewModel.fetchBooks(value);
+      } else {
+        futureBooks = _viewModel.fetchBooks(selectedCategory);
+      }
+    });
+  }
+
+  void _handleClearSearch() {
+    setState(() {
+      _searchController.clear();
+      futureBooks = _viewModel.fetchBooks(selectedCategory);
+    });
+  }
+
+  void _handleCategoryChange(String category) {
+    setState(() {
+      selectedCategory = category;
+      futureBooks = _viewModel.fetchBooks(category);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xff0F1030),
-
-      // ✅ AppBar with Notification Icon
       appBar: AppBar(
         backgroundColor: const Color(0xff0F1030),
         iconTheme: const IconThemeData(color: Colors.white),
@@ -47,17 +75,12 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {
-              // 🔔 Notification icon press action
-            },
+            onPressed: () {},
           ),
           const SizedBox(width: 8),
         ],
       ),
-
-      // ✅ Drawer added back
       drawer: const CustomDrawer(),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -65,54 +88,33 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             CustomSearchBar(
               controller: _searchController,
-              onChanged: (value) {
-                if (value.isNotEmpty) {
-                  setState(() {
-                    futureBooks = _viewModel.fetchBooks(value);
-                  });
-                } else {
-                  setState(() {
-                    futureBooks = _viewModel.fetchBooks(selectedCategory); 
-                  });
-                }
-              },
-              onClear: () {
-                setState(() {
-                  _searchController.clear();
-                  futureBooks = _viewModel.fetchBooks(selectedCategory); // reset
-                });
-              },
+              onChanged: _handleSearch,
+              onClear: _handleClearSearch,
             ),
-
             const SizedBox(height: 20),
-
-            // ✅ Categories
-            CategoryList(
-              onCategorySelected: (category) {
-                setState(() {
-                  selectedCategory = category;
-                  futureBooks = _viewModel.fetchBooks(category);
-                });
-              },
-            ),
-
+            CategoryList(onCategorySelected: _handleCategoryChange),
             const SizedBox(height: 20),
-
-            // ✅ Books Grid
             FutureBuilder<List<BookModel>>(
               future: futureBooks,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
-                      child: CircularProgressIndicator(color: Colors.white));
+                    child: CircularProgressIndicator(color: Colors.white),
+                  );
                 } else if (snapshot.hasError) {
                   return Center(
-                      child: Text("Error: ${snapshot.error}",
-                          style: const TextStyle(color: Colors.red)));
+                    child: Text(
+                      "Error: ${snapshot.error}",
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  );
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return const Center(
-                      child: Text("No books found",
-                          style: TextStyle(color: Colors.white)));
+                    child: Text(
+                      "No books found",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  );
                 }
 
                 final books = snapshot.data!;
@@ -120,9 +122,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   physics: const NeverScrollableScrollPhysics(),
                   shrinkWrap: true,
                   itemCount: books.length,
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2, // 2 per row
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
                     childAspectRatio: 0.65,

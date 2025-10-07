@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "77660467149",
+    "project_id": "redora-1fc3a",
+    "storage_bucket": "redora-1fc3a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:77660467149:android:a6e830e085ce0178749e84",
+        "android_client_info": {
+          "package_name": "com.example.redora"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAxazgpCubyJwLZ35k7BGF_5mxBNGn186A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

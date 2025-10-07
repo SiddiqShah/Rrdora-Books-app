@@ -1,8 +1,6 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:redora/view/login_screen.dart';
+import 'package:redora/main.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -36,8 +34,9 @@ class _SplashScreenState extends State<SplashScreen> {
         timer.cancel();
         Future.delayed(const Duration(seconds: 1), () {
           Navigator.pushReplacement(
+            // ignore: use_build_context_synchronously
             context,
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            MaterialPageRoute(builder: (context) => const AuthWrapper()),
           );
         });
       }
@@ -45,30 +44,27 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   @override
-  @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: const Color(0xff0F192D),
-    body: Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Image.asset(
-            'assets/images/logo.png',
-          ),
-          Text(
-            _displayedText,
-            style: const TextStyle(
-              fontFamily: 'Montserrat',
-              fontSize: 40,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              letterSpacing: 2,
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xff0F192D),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset('assets/images/logo.png'),
+            Text(
+              _displayedText,
+              style: const TextStyle(
+                fontFamily: 'Montserrat',
+                fontSize: 40,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 2,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
