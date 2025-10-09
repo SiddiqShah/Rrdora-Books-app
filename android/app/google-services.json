@@ -12,7 +12,20 @@
           "package_name": "com.example.redora"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "77660467149-q7ae0qo3bg08gositkpeol5sebf9bh34.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.redora",
+            "certificate_hash": "8125b3e5751ca949ae64911279cc2e5e08735d8b"
+          }
+        },
+        {
+          "client_id": "77660467149-ekv3unutksfj7c2i8fjkacgs9pr7o8tt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAxazgpCubyJwLZ35k7BGF_5mxBNGn186A"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "77660467149-ekv3unutksfj7c2i8fjkacgs9pr7o8tt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "77660467149-mtvuqmet00qgpmbirr9mvurdbo0cvgde.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.redora"
+              }
+            }
+          ]
         }
       }
     }

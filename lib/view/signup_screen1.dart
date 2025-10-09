@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:redora/ViewModel/view_model.dart';
-import 'package:redora/view/signup_screen2.dart';
 import 'package:redora/widgets/custom_button.dart';
 import 'package:redora/widgets/custom_textfiled.dart';
 import 'package:redora/widgets/custom_snackbar.dart';
-import 'homecreen.dart';
+import 'login_screen.dart';
 
 class SignupScreen1 extends StatefulWidget {
   const SignupScreen1({super.key});
@@ -17,78 +15,60 @@ class SignupScreen1 extends StatefulWidget {
 
 class _SignupScreen1State extends State<SignupScreen1> {
   final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
   @override
   void dispose() {
     emailController.dispose();
+    passwordController.dispose();
     super.dispose();
   }
 
-  void _handleEmailSignup() {
-    if (emailController.text.trim().isEmpty) {
+  bool _isPasswordValid(String p) => p.length >= 8;
+
+  Future<void> _handleSignup() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
       CustomSnackbar.show(
         context,
-        message: 'Please enter your email',
+        message: 'Please enter email and password',
         isError: true,
       );
       return;
     }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SignupScreen2(email: emailController.text.trim()),
-      ),
-    );
-  }
-
-  Future<void> _handleGoogleSignup() async {
-    final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
-
-    final success = await authViewModel.loginWithGoogle();
-
-    if (!mounted) return;
-
-    if (success) {
+    if (!_isPasswordValid(password)) {
       CustomSnackbar.show(
         context,
-        message: 'Account created successfully!',
-        isError: false,
-      );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    } else {
-      CustomSnackbar.show(
-        context,
-        message: authViewModel.errorMessage ?? 'Google signup failed',
+        message: 'Password must be at least 8 characters',
         isError: true,
       );
+      return;
     }
-  }
 
-  Future<void> _handleFacebookSignup() async {
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
-
-    final success = await authViewModel.loginWithFacebook();
+    final success = await authViewModel.signUp(email, password);
 
     if (!mounted) return;
 
     if (success) {
       CustomSnackbar.show(
         context,
-        message: 'Account created successfully!',
+        message: 'Account created successfully! Please login.',
         isError: false,
       );
+
+      // Navigate to login screen
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
     } else {
       CustomSnackbar.show(
         context,
-        message: authViewModel.errorMessage ?? 'Facebook signup failed',
+        message: authViewModel.errorMessage ?? 'Signup failed',
         isError: true,
       );
     }
@@ -134,9 +114,10 @@ class _SignupScreen1State extends State<SignupScreen1> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 100),
+                      const SizedBox(height: 40),
+
                       const Text(
-                        "Email",
+                        'Email',
                         style: TextStyle(
                           fontFamily: 'Poppins-Medium',
                           fontSize: 15,
@@ -147,76 +128,71 @@ class _SignupScreen1State extends State<SignupScreen1> {
                       CustomTextfield(
                         controller: emailController,
                         keyboardType: TextInputType.emailAddress,
-                        hintText: "Enter your email",
+                        hintText: 'Enter your email',
                       ),
                       const SizedBox(height: 15),
+
+                      const Text(
+                        'Password',
+                        style: TextStyle(
+                          fontFamily: 'Poppins-Medium',
+                          fontSize: 15,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      CustomTextfield(
+                        controller: passwordController,
+                        obscureText: true,
+                        keyboardType: TextInputType.text,
+                        hintText: 'Enter your password',
+                      ),
+                      const SizedBox(height: 20),
+
                       CustomButton(
-                        text: "Sign Up with Email",
+                        text: 'Sign Up',
                         backgroundColor: const Color(0xff0A369D),
                         textColor: Colors.white,
-                        onPressed: _handleEmailSignup,
-                      ),
-                      const SizedBox(height: 30),
-                      Row(
-                        children: const [
-                          Expanded(
-                            child: Divider(
-                              color: Colors.white54,
-                              thickness: 1,
-                              endIndent: 10,
-                            ),
-                          ),
-                          Text(
-                            "or Signup with",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          Expanded(
-                            child: Divider(
-                              color: Colors.white54,
-                              thickness: 1,
-                              indent: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 30),
-                      CustomButton(
-                        icon: FontAwesomeIcons.google,
-                        text: 'Continue with Google',
-                        backgroundColor: const Color(0xffD9D9D9),
-                        textColor: Colors.black,
                         onPressed: authViewModel.isLoading
                             ? null
-                            : _handleGoogleSignup,
+                            : _handleSignup,
                       ),
-                      const SizedBox(height: 8),
-                      CustomButton(
-                        icon: FontAwesomeIcons.apple,
-                        text: 'Continue with Apple',
-                        backgroundColor: const Color(0xffD9D9D9),
-                        textColor: Colors.black,
-                        onPressed: () {
-                          CustomSnackbar.show(
-                            context,
-                            message: 'Apple Sign In coming soon!',
-                            isError: false,
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      CustomButton(
-                        icon: FontAwesomeIcons.facebook,
-                        text: 'Continue with Facebook',
-                        backgroundColor: const Color(0xffD9D9D9),
-                        textColor: Colors.black,
-                        onPressed: authViewModel.isLoading
-                            ? null
-                            : _handleFacebookSignup,
+
+                      const SizedBox(height: 16),
+                      Center(
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginScreen(),
+                              ),
+                            );
+                          },
+                          child: RichText(
+                            text: TextSpan(
+                              children: [
+                                const TextSpan(
+                                  text: 'Already have an account? ',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                TextSpan(
+                                  text: 'Login',
+                                  style: TextStyle(
+                                    color: Color(0xff0A369D),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
+
               if (authViewModel.isLoading)
                 Container(
                   color: Colors.black54,

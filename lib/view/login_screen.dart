@@ -7,6 +7,7 @@ import 'package:redora/widgets/custom_button.dart';
 import 'package:redora/widgets/custom_textfiled.dart';
 import 'package:redora/widgets/custom_snackbar.dart';
 import 'homecreen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,13 +30,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleLogin() async {
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
-
     final success = await authViewModel.login(
       emailController.text.trim(),
       passwordController.text,
     );
 
-    if (!mounted) return;
+    if (!mounted) return; // ✅ ensures safe context use
 
     if (success) {
       CustomSnackbar.show(
@@ -43,11 +43,13 @@ class _LoginScreenState extends State<LoginScreen> {
         message: 'Login successful!',
         isError: false,
       );
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } else {
+      if (!mounted) return;
       setState(() {
         if (authViewModel.errorMessage?.contains("No user found") ?? false) {
           showSignupPrompt = true;
@@ -63,7 +65,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleGoogleLogin() async {
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
-
     final success = await authViewModel.loginWithGoogle();
 
     if (!mounted) return;
@@ -74,11 +75,13 @@ class _LoginScreenState extends State<LoginScreen> {
         message: 'Google login successful!',
         isError: false,
       );
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } else {
+      if (!mounted) return;
       CustomSnackbar.show(
         context,
         message: authViewModel.errorMessage ?? 'Google login failed',
@@ -89,7 +92,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleFacebookLogin() async {
     final authViewModel = Provider.of<AuthViewModel>(context, listen: false);
-
     final success = await authViewModel.loginWithFacebook();
 
     if (!mounted) return;
@@ -100,16 +102,102 @@ class _LoginScreenState extends State<LoginScreen> {
         message: 'Facebook login successful!',
         isError: false,
       );
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } else {
+      if (!mounted) return;
       CustomSnackbar.show(
         context,
         message: authViewModel.errorMessage ?? 'Facebook login failed',
         isError: true,
       );
+    }
+  }
+
+  Future<void> _handlePasswordReset() async {
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        backgroundColor: const Color(0xff1E2A47),
+        title: const Text(
+          'Reset password',
+          style: TextStyle(color: Colors.white),
+        ),
+        children: [
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, 'email'),
+            child: const Text(
+              'Reset via Email',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, 'google'),
+            child: const Text(
+              'Google account recovery',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(context, 'facebook'),
+            child: const Text(
+              'Facebook account recovery',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (choice == 'email') {
+      final email = emailController.text.trim();
+      if (email.isEmpty) {
+        CustomSnackbar.show(
+          context,
+          message: 'Please enter your email in the email field first',
+          isError: true,
+        );
+        return;
+      }
+
+      final vm = Provider.of<AuthViewModel>(context, listen: false);
+      final ok = await vm.sendPasswordResetEmail(email);
+      if (!mounted) return;
+
+      CustomSnackbar.show(
+        context,
+        message: ok
+            ? 'Password reset email sent. Check your inbox.'
+            : vm.errorMessage ?? 'Failed to send reset email',
+        isError: !ok,
+      );
+    } else if (choice == 'google') {
+      final uri = Uri.parse('https://accounts.google.com/signin/recovery');
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else if (mounted) {
+        CustomSnackbar.show(
+          context,
+          message: 'Could not open Google recovery page',
+          isError: true,
+        );
+      }
+    } else if (choice == 'facebook') {
+      final uri = Uri.parse('https://www.facebook.com/login/identify');
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else if (mounted) {
+        CustomSnackbar.show(
+          context,
+          message: 'Could not open Facebook recovery page',
+          isError: true,
+        );
+      }
     }
   }
 
@@ -122,10 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
           return Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 25,
-                  vertical: 75,
-                ),
+                padding: const EdgeInsets.only(top: 75, left: 25, right: 25),
                 child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,6 +240,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 30),
+
+                      /// EMAIL FIELD
                       const Text(
                         "Email",
                         style: TextStyle(
@@ -170,6 +257,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         hintText: "Enter your email",
                       ),
                       const SizedBox(height: 20),
+
+                      /// PASSWORD FIELD
                       const Text(
                         "Password",
                         style: TextStyle(
@@ -185,10 +274,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         hintText: "Enter your password",
                         obscureText: true,
                       ),
+
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () {},
+                          onPressed: _handlePasswordReset,
                           child: const Text(
                             'Forgot password?',
                             style: TextStyle(
@@ -198,16 +288,21 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 30),
+
+                      const SizedBox(height: 20),
+
+                      /// LOGIN BUTTON
                       CustomButton(
-                        text: "Login",
+                        text: authViewModel.isLoading ? "Loading..." : "Login",
                         backgroundColor: const Color(0xff0A369D),
                         textColor: Colors.white,
                         onPressed: authViewModel.isLoading
                             ? null
                             : _handleLogin,
                       ),
+
                       const SizedBox(height: 20),
+
                       Row(
                         children: const [
                           Expanded(
@@ -230,7 +325,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                       ),
+
                       const SizedBox(height: 20),
+
+                      /// GOOGLE BUTTON
                       CustomButton(
                         icon: FontAwesomeIcons.google,
                         text: 'Continue with Google',
@@ -241,6 +339,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             : _handleGoogleLogin,
                       ),
                       const SizedBox(height: 8),
+
+                      /// FACEBOOK BUTTON
                       CustomButton(
                         icon: FontAwesomeIcons.facebook,
                         text: 'Continue with Facebook',
@@ -250,7 +350,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             ? null
                             : _handleFacebookLogin,
                       ),
-                      const SizedBox(height: 30),
+
+                      const SizedBox(height: 20),
+
+                      /// SIGNUP LINK
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -282,24 +385,26 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                       ),
-                      showSignupPrompt
-                          ? Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Text(
-                                  "No account found for this email. Please sign up first.",
-                                  style: const TextStyle(
-                                    color: Colors.red,
-                                    fontFamily: 'Poppins-Medium',
-                                  ),
-                                ),
+
+                      if (showSignupPrompt)
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(12.0),
+                            child: Text(
+                              "No account found for this email. Please sign up first.",
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontFamily: 'Poppins-Medium',
                               ),
-                            )
-                          : const SizedBox(),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
               ),
+
+              /// LOADING OVERLAY
               if (authViewModel.isLoading)
                 Container(
                   color: Colors.black54,

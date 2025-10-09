@@ -39,7 +39,8 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AuthViewModel>(
       builder: (context, authViewModel, child) {
-        if (authViewModel.isLoading) {
+        // Show loading while checking auth state
+        if (authViewModel.user == null && authViewModel.isLoading) {
           return const Scaffold(
             backgroundColor: Color(0xff0F1030),
             body: Center(
@@ -47,11 +48,14 @@ class AuthWrapper extends StatelessWidget {
             ),
           );
         }
-        if (authViewModel.isAuthenticated) {
+
+        // If user is authenticated, show HomeScreen
+        if (authViewModel.isAuthenticated && authViewModel.user != null) {
           return const HomeScreen();
-        } else {
-          return const LoginScreen();
         }
+
+        // Otherwise show LoginScreen
+        return const LoginScreen();
       },
     );
   }
